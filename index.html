@@ -9,6 +9,8 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- html2pdf CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -419,10 +421,7 @@
                                 <i class="fas fa-chart-pie text-lg text-gray-600 mr-2"></i> Payment Status
                             </h4>
                             <div class="h-48 md:h-64 flex items-center justify-center">
-                                <div class="text-center">
-                                    <i class="fas fa-chart-pie text-6xl text-green-400 mb-4"></i>
-                                    <p class="text-gray-600">Pie chart would be displayed here</p>
-                                </div>
+                                <canvas id="paymentStatusChart"></canvas>
                             </div>
                         </div>
                     </div>
@@ -438,6 +437,7 @@
 
         // State variable for client editing
         let editingClientId = null;
+        let paymentStatusChart = null; // To store the Chart.js instance
 
         // DOM elements
         const loadingScreen = document.getElementById('loading-screen');
@@ -456,6 +456,8 @@
         const clientsTable = document.getElementById('clients-table');
         const invoicesTable = document.getElementById('invoices-table');
         const recentInvoicesTable = document.getElementById('recent-invoices-table');
+        const paymentStatusChartCanvas = document.getElementById('paymentStatusChart');
+
 
         // Function to hide loading screen and show main content
         function hideLoadingScreen() {
@@ -649,6 +651,8 @@
             document.getElementById('total-invoices').textContent = totalInvoices;
             document.getElementById('paid-amount').textContent = `₹${paidAmount.toFixed(2)}`; // Changed to INR
             document.getElementById('pending-amount').textContent = `₹${pendingAmount.toFixed(2)}`; // Changed to INR
+
+            renderPaymentStatusChart(); // Update chart when dashboard data changes
         }
 
         function updateClientSelect() {
@@ -814,6 +818,58 @@
             html2pdf().from(invoiceContent).save(`Invoice_${invoice.number}.pdf`);
         }
 
+        function renderPaymentStatusChart() {
+            const paidAmount = invoices.filter(i => i.status === 'Paid').reduce((sum, i) => sum + i.total, 0);
+            const pendingAmount = invoices.filter(i => i.status === 'Pending').reduce((sum, i) => sum + i.total, 0);
+
+            const data = {
+                labels: ['Paid', 'Pending'],
+                datasets: [{
+                    data: [paidAmount, pendingAmount],
+                    backgroundColor: ['#10B981', '#F59E0B'], // Green for Paid, Amber for Pending
+                    hoverOffset: 4
+                }]
+            };
+
+            const config = {
+                type: 'pie',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false, // Allow chart to fill container
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: '#374151' // Gray-700
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed !== null) {
+                                        label += '₹' + context.parsed.toFixed(2);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+
+            // Destroy existing chart if it exists to prevent multiple charts on same canvas
+            if (paymentStatusChart) {
+                paymentStatusChart.destroy();
+            }
+
+            paymentStatusChart = new Chart(paymentStatusChartCanvas, config);
+        }
+
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
@@ -821,7 +877,7 @@
             setTimeout(() => {
                 updateClientsList();
                 updateInvoicesList();
-                updateDashboard();
+                updateDashboard(); // This will now also call renderPaymentStatusChart
                 updateClientSelect();
                 clearItems();
                 
