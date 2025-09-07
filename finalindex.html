@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InvoicePro - Modern Invoice Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- html2pdf CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .tab-active {
+            border-bottom: 3px solid #4f46e5;
+            color: #4f46e5;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        .bounce-in {
+            animation: bounceIn 0.6s ease forwards;
+        }
+        
+        .slide-up {
+            animation: slideUp 0.4s ease forwards;
+        }
+        
+        .tab-hover {
+            transition: color 0.3s ease;
+        }
+        
+        .tab-hover:hover {
+            color: #4f46e5;
+        }
+        
+        .loading-fade-out {
+            animation: fadeOut 0.5s ease forwards;
+            opacity: 1;
+        }
+        
+        .hero-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .card-shadow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: box-shadow 0.3s ease;
+        }
+        
+        .card-shadow:hover {
+            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4), 0 4px 6px -2px rgba(79, 70, 229, 0.3);
+        }
+        
+        .input-focus {
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        
+        .input-focus:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+        }
+        
+        button:active {
+            transform: scale(0.97);
+            transition: transform 0.1s ease;
+        }
+        
+        tbody tr {
+            animation: slideIn 0.4s ease forwards;
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                visibility: hidden;
+            }
+        }
+        
+        @keyframes bounceIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideIn {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+        
+        @media (max-width: 768px) {
+            .tab-scroll {
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+            .tab-btn {
+                display: inline-block;
+                padding: 0.5rem 1rem;
+                font-size: 0.875rem;
+            }
+            .mobile-margin {
+                margin: 0 1rem;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="fixed inset-0 bg-gradient-to-br from-indigo-400 to-purple-600 flex items-center justify-center z-50">
+        <div class="text-center text-white">
+            <i class="fas fa-spinner spinner text-6xl mb-4"></i>
+            <h1 class="text-2xl md:text-4xl font-bold mb-2">Loading InvoicePro</h1>
+            <p class="text-lg md:text-xl">Initializing your modern invoice management experience...</p>
+        </div>
+    </div>
+
+    <!-- Main Content (Hidden Initially) -->
+    <div id="main-content" class="opacity-0">
+        <!-- Header -->
+        <header class="hero-gradient text-white py-8 md:py-12">
+            <div class="container mx-auto px-4 text-center">
+                <h1 class="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 bounce-in opacity-0" style="animation-delay: 0.2s;">InvoicePro</h1>
+                <p class="text-lg md:text-xl lg:text-2xl mb-6 md:mb-8 slide-up opacity-0" style="animation-delay: 0.5s;">Modern Invoice Management Solution</p>
+                <div class="w-32 h-32 md:w-48 md:h-48 mx-auto mb-6 md:mb-8 bg-white rounded-full flex items-center justify-center shadow-lg fade-in opacity-0" style="animation-delay: 0.8s;">
+                    <i class="fas fa-file-invoice-dollar text-4xl md:text-6xl text-indigo-600"></i>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="bg-white shadow-md sticky top-0 z-10">
+            <div class="container mx-auto px-4">
+                <div class="tab-scroll">
+                    <ul class="flex justify-start md:justify-center space-x-4 md:space-x-8 py-4">
+                        <li><button id="tab-dashboard" class="tab-btn py-2 px-2 md:px-4 font-semibold text-gray-700 tab-hover transition-colors tab-active">Dashboard</button></li>
+                        <li><button id="tab-clients" class="tab-btn py-2 px-2 md:px-4 font-semibold text-gray-700 tab-hover transition-colors">Clients</button></li>
+                        <li><button id="tab-create" class="tab-btn py-2 px-2 md:px-4 font-semibold text-gray-700 tab-hover transition-colors">Create Invoice</button></li>
+                        <li><button id="tab-invoices" class="tab-btn py-2 px-2 md:px-4 font-semibold text-gray-700 tab-hover transition-colors">Invoices</button></li>
+                        <li><button id="tab-reports" class="tab-btn py-2 px-2 md:px-4 font-semibold text-gray-700 tab-hover transition-colors">Reports</button></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="container mx-auto px-4 py-6 md:py-8 mobile-margin">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="tab-content fade-in">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
+                    <div class="bg-white rounded-lg p-4 md:p-6 card-shadow bounce-in opacity-0" style="animation-delay: 0.2s;">
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-receipt text-2xl text-indigo-600 mr-2"></i>
+                            <h3 class="text-lg md:text-xl font-semibold text-gray-800">Total Invoices</h3>
+                        </div>
+                        <p class="text-2xl md:text-3xl font-bold text-indigo-600" id="total-invoices">0</p>
+                    </div>
+                    <div class="bg-white rounded-lg p-4 md:p-6 card-shadow bounce-in opacity-0" style="animation-delay: 0.4s;">
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-rupee-sign text-2xl text-green-600 mr-2"></i>
+                            <h3 class="text-lg md:text-xl font-semibold text-gray-800">Paid Amount</h3>
+                        </div>
+                        <p class="text-2xl md:text-3xl font-bold text-green-600" id="paid-amount">₹0</p>
+                    </div>
+                    <div class="bg-white rounded-lg p-4 md:p-6 card-shadow bounce-in opacity-0" style="animation-delay: 0.6s;">
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-clock text-2xl text-yellow-600 mr-2"></i>
+                            <h3 class="text-lg md:text-xl font-semibold text-gray-800">Pending Amount</h3>
+                        </div>
+                        <p class="text-2xl md:text-3xl font-bold text-yellow-600" id="pending-amount">₹0</p>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg p-4 md:p-6 card-shadow slide-up opacity-0" style="animation-delay: 0.8s;">
+                    <h3 class="text-lg md:text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-history text-xl text-gray-600 mr-2"></i> Recent Invoices
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full table-auto min-w-full">
+                            <thead>
+                                <tr class="bg-gray-50">
+                                    <th class="px-2 md:px-4 py-2 text-left font-semibold text-gray-800 text-xs md:text-sm">Invoice #</th>
+                                    <th class="px-2 md:px-4 py-2 text-left font-semibold text-gray-800 text-xs md:text-sm">Client</th>
+                                    <th class="px-2 md:px-4 py-2 text-left font-semibold text-gray-800 text-xs md:text-sm">Amount</th>
+                                    <th class="px-2 md:px-4 py-2 text-left font-semibold text-gray-800 text-xs md:text-sm">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-invoices-table" class="text-xs md:text-sm"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Clients Section -->
+            <section id="clients" class="tab-content hidden fade-in">
+                <div class="bg-white rounded-lg p-4 md:p-6 card-shadow mb-4 md:mb-6 bounce-in opacity-0" style="animation-delay: 0.2s;">
+                    <h3 class="text-lg md:text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-user-plus text-xl text-gray-600 mr-2"></i> Add New Client
+                    </h3>
+                    <form id="client-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                            <input type="text" id="client-name" class="w-full px-3 py-3 md:py-2 border border-gray-300 rounded-md input-focus text-base" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                            <input type="email" id="client-email" class="w-full px-3 py-3 md:py-2 border border-gray-300 rounded-md input-focus text-base" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                            <input type="tel" id="client-phone" class="w-full px-3 py-3 md:py-2 border border-gray-300 rounded-md input-focus text-base" required>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                            <textarea id="client-address" class="w-full px-3 py-3 md:py-2 border border-gray-300 rounded-md input-focus text-base" rows="3" required></textarea>
+                        </div>
+                        <div class="md:col-span-2 flex space-x-2">
+                            <button type="submit" id="client-submit-btn" class="bg-indigo-600 text-white px-6 py-3 md:py-2 rounded-md hover:bg-indigo-700 transition-colors w-full text-lg md:text-base">Add Client</button>
+                            <button type="button" id="client-cancel-btn" class="bg-gray-300 text-gray-800 px-6 py-3 md:py-2 rounded-md hover:bg-gray-400 transition-colors w-full text-lg md:text-base hidden">Cancel Edit</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="bg-white rounded-lg p-4 md:p-6 card-shadow slide-up opacity-0" style="animation-delay: 0.4s;">
+                    <h3 class="text-lg md:text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-users text-xl text-gray-600 mr-2"></i> Client List
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full table-auto min-w-full">
+                            <thead>
+                                <tr class="bg-gray-50">
+                                    <th class="px-2 md:px-4 py-2 text-left font-semibold text-gray-800 text-xs md:text-sm">Name</th>
+                                    <th class="px-2 md:px-4 py-2 text-left font-semibold text-gray-800 text-xs md:text-sm hidden md:table-cell">Email</th>
+                                    <th class="px-2 md:px-4 py-2 text-left font-semibold text-gray-800 text-xs md:text-sm">Phone</th>
+                                    <th class="px-2 md:px-4 py-2 text-left font-semibold text-gray-800 text-xs md:text-sm">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clients-table" class="text-xs md:text-sm"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Create Invoice Section -->
+            <section id="create" class="tab-content hidden fade-in">
+                <div class="bg-white rounded-lg p-4 md:p-6 card-shadow bounce-in opacity-0" style="animation-delay: 0.2s;">
+                    <h3 class="text-lg md:text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-plus-circle text-xl text-gray-600 mr-2"></i> Create New Invoice
+                    </h3>
+                    <form id="invoice-form" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Client</label>
+                                <select id="invoice-client" class="w-full px-3 py-3 md:py-2 border border-gray-300 rounded-md input-focus text-base" required>
+                                    <option value="">Select a client</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Invoice Number</label>
+                                <input type="text" id="invoice-number" class="w-full px-3 py-3 md:py-2 border border-gray-300 rounded-md input-focus text-base" required readonly>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Issue Date</label>
+                                <input type="date" id="issue-date" class="w-full px-3 py-3 md:py-2 border border-gray-300 rounded-md input-focus text-base" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                                <input type="date" id="due-date" class="w-full px-3 py-3 md:py-2 border border-gray-300 rounded-md input-focus text-base" required>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                                <i class="fas fa-list-ul text-lg text-gray-600 mr-2"></i> Items
+                            </h4>
+                            <div id="items-container">
+                                <div class="item grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-4 mb-4">
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-700 mb-1">Description</label>
+                                        <input type="text" class="item-desc w-full px-3 py-3 md:py-2 border border-gray-300 rounded-md input-focus text-base" required>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-700 mb-1">Quantity</label>
+                                        <input type="number" class="item-qty w-full px-3 py-3 md:py-2 border border-gray-300 rounded-md input-focus text-base" min="1" required>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-700 mb-1">Price</label>
+                                        <input type="number" step="0.01" class="item-price w-full px-3 py-3 md:py-2 border border-gray-300 rounded-md input-focus text-base" required>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-700 mb-1">Total</label>
+                                        <input type="number" step="0.01" class="item-total w-full px-3 py-3 md:py-2 border border-gray-300 rounded-md bg-gray-50 text-base" readonly>
+                                    </div>
+                                    <div class="flex items-end justify-center">
+                                        <button type="button" class="remove-item text-red-600 hover:text-red-800 py-2 text-base md:text-sm">
+                                            Remove
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" id="add-item" class="bg-gray-200 text-gray-800 px-4 py-3 md:px-4 md:py-2 rounded-md hover:bg-gray-300 transition-colors mb-4 text-base md:text-sm w-full md:w-auto">
+                                <i class="fas fa-plus mr-1"></i>Add Item
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Subtotal</label>
+                                <input type="number" step="0.01" id="subtotal" class="w-full px-3 py-3 md:py-2 border border-gray-300 rounded-md bg-gray-50 text-base" readonly>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Tax (%)</label>
+                                <input type="number" step="0.01" id="tax" class="w-full px-3 py-3 md:py-2 border border-gray-300 rounded-md input-focus text-base" value="0">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Total</label>
+                                <input type="number" step="0.01" id="total" class="w-full px-3 py-3 md:py-2 border border-gray-300 rounded-md bg-gray-50 text-base" readonly>
+                            </div>
+                        </div>
+                        <div class="md:col-span-2">
+                            <button type="submit" class="bg-indigo-600 text-white px-6 py-4 md:py-3 rounded-md hover:bg-indigo-700 transition-colors text-lg md:text-lg w-full">
+                                <i class="fas fa-paper-plane mr-2"></i>Create Invoice
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Invoices Section -->
+            <section id="invoices" class="tab-content hidden fade-in">
+                <div class="bg-white rounded-lg p-4 md:p-6 card-shadow slide-up opacity-0" style="animation-delay: 0.2s;">
+                    <h3 class="text-lg md:text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-file-invoice text-xl text-gray-600 mr-2"></i> All Invoices
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full table-auto min-w-full">
+                            <thead>
+                                <tr class="bg-gray-50">
+                                    <th class="px-2 md:px-4 py-2 text-left font-semibold text-gray-800 text-xs md:text-sm">Invoice #</th>
+                                    <th class="px-2 md:px-4 py-2 text-left font-semibold text-gray-800 text-xs md:text-sm">Client</th>
+                                    <th class="px-2 md:px-4 py-2 text-left font-semibold text-gray-800 text-xs md:text-sm">Amount</th>
+                                    <th class="px-2 md:px-4 py-2 text-left font-semibold text-gray-800 text-xs md:text-sm hidden md:table-cell">Issue Date</th>
+                                    <th class="px-2 md:px-4 py-2 text-left font-semibold text-gray-800 text-xs md:text-sm">Due Date</th>
+                                    <th class="px-2 md:px-4 py-2 text-left font-semibold text-gray-800 text-xs md:text-sm">Status</th>
+                                    <th class="px-2 md:px-4 py-2 text-left font-semibold text-gray-800 text-xs md:text-sm">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="invoices-table" class="text-xs md:text-sm"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Reports Section -->
+            <section id="reports" class="tab-content hidden fade-in">
+                <div class="bg-white rounded-lg p-4 md:p-6 card-shadow bounce-in opacity-0" style="animation-delay: 0.2s;">
+                    <h3 class="text-lg md:text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-chart-bar text-xl text-gray-600 mr-2"></i> Financial Reports
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-gray-50 p-4 rounded-lg slide-up opacity-0" style="animation-delay: 0.4s;">
+                            <h4 class="text-lg font-semibold text-gray-800 mb-2 flex items-center">
+                                <i class="fas fa-calendar-alt text-lg text-gray-600 mr-2"></i> Monthly Revenue
+                            </h4>
+                            <div class="h-48 md:h-64 flex items-center justify-center">
+                                <div class="text-center">
+                                    <i class="fas fa-chart-line text-6xl text-indigo-400 mb-4"></i>
+                                    <p class="text-gray-600">Revenue chart would be displayed here</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg slide-up opacity-0" style="animation-delay: 0.6s;">
+                            <h4 class="text-lg font-semibold text-gray-800 mb-2 flex items-center">
+                                <i class="fas fa-chart-pie text-lg text-gray-600 mr-2"></i> Payment Status
+                            </h4>
+                            <div class="h-48 md:h-64 flex items-center justify-center">
+                                <div class="text-center">
+                                    <i class="fas fa-chart-pie text-6xl text-green-400 mb-4"></i>
+                                    <p class="text-gray-600">Pie chart would be displayed here</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Data storage (using localStorage for persistence)
+        let clients = JSON.parse(localStorage.getItem('invoicepro-clients')) || [];
+        let invoices = JSON.parse(localStorage.getItem('invoicepro-invoices')) || [];
+
+        // State variable for client editing
+        let editingClientId = null;
+
+        // DOM elements
+        const loadingScreen = document.getElementById('loading-screen');
+        const mainContent = document.getElementById('main-content');
+        const tabs = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const clientForm = document.getElementById('client-form');
+        const clientNameInput = document.getElementById('client-name');
+        const clientEmailInput = document.getElementById('client-email');
+        const clientPhoneInput = document.getElementById('client-phone');
+        const clientAddressInput = document.getElementById('client-address');
+        const clientSubmitBtn = document.getElementById('client-submit-btn');
+        const clientCancelBtn = document.getElementById('client-cancel-btn');
+        const invoiceForm = document.getElementById('invoice-form');
+        const addItemBtn = document.getElementById('add-item');
+        const clientsTable = document.getElementById('clients-table');
+        const invoicesTable = document.getElementById('invoices-table');
+        const recentInvoicesTable = document.getElementById('recent-invoices-table');
+
+        // Function to hide loading screen and show main content
+        function hideLoadingScreen() {
+            loadingScreen.classList.add('loading-fade-out');
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+                mainContent.style.opacity = '1';
+                // Trigger animations for main content
+                document.querySelectorAll('.bounce-in, .slide-up, .fade-in').forEach(el => {
+                    el.style.opacity = '1';
+                });
+            }, 500);
+        }
+
+        // Tab switching
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('tab-active'));
+                tabContents.forEach(c => c.classList.add('hidden'));
+                tab.classList.add('tab-active');
+                document.getElementById(tab.id.replace('tab-', '')).classList.remove('hidden');
+            });
+        });
+
+        // Client form submission
+        clientForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = clientNameInput.value;
+            const email = clientEmailInput.value;
+            const phone = clientPhoneInput.value;
+            const address = clientAddressInput.value;
+
+            if (editingClientId) {
+                // Update existing client
+                const clientIndex = clients.findIndex(c => c.id === editingClientId);
+                if (clientIndex > -1) {
+                    clients[clientIndex] = {...clients[clientIndex],
+                        name,
+                        email,
+                        phone,
+                        address
+                    };
+                    alert('Client updated successfully!');
+                }
+                editingClientId = null; // Clear editing state
+                clientSubmitBtn.textContent = 'Add Client';
+                clientCancelBtn.classList.add('hidden');
+            } else {
+                // Add new client
+                const newClient = {
+                    id: Date.now(),
+                    name,
+                    email,
+                    phone,
+                    address
+                };
+                clients.push(newClient);
+                alert('Client added successfully!');
+            }
+
+            localStorage.setItem('invoicepro-clients', JSON.stringify(clients));
+
+            clientForm.reset();
+            updateClientsList();
+            updateClientSelect();
+        });
+
+        // Cancel Edit button for client form
+        clientCancelBtn.addEventListener('click', () => {
+            editingClientId = null;
+            clientForm.reset();
+            clientSubmitBtn.textContent = 'Add Client';
+            clientCancelBtn.classList.add('hidden');
+        });
+
+        // Add item to invoice
+        addItemBtn.addEventListener('click', () => {
+            const itemsContainer = document.getElementById('items-container');
+            const newItem = document.querySelector('.item').cloneNode(true);
+            newItem.querySelectorAll('input').forEach(input => input.value = '');
+            itemsContainer.appendChild(newItem);
+            attachItemEvents(newItem);
+        });
+
+        // Invoice form submission
+        invoiceForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const clientId = document.getElementById('invoice-client').value;
+            const invoiceNumber = document.getElementById('invoice-number').value;
+            const issueDate = document.getElementById('issue-date').value;
+            const dueDate = document.getElementById('due-date').value;
+            const items = [];
+
+            document.querySelectorAll('.item').forEach(item => {
+                const desc = item.querySelector('.item-desc').value;
+                const qty = parseFloat(item.querySelector('.item-qty').value);
+                const price = parseFloat(item.querySelector('.item-price').value);
+                const total = parseFloat(item.querySelector('.item-total').value);
+                items.push({
+                    desc,
+                    qty,
+                    price,
+                    total
+                });
+            });
+
+            const subtotal = parseFloat(document.getElementById('subtotal').value);
+            const tax = parseFloat(document.getElementById('tax').value);
+            const total = parseFloat(document.getElementById('total').value);
+
+            const newInvoice = {
+                id: Date.now(),
+                number: invoiceNumber,
+                clientId: parseInt(clientId),
+                issueDate,
+                dueDate,
+                items,
+                subtotal,
+                tax,
+                total,
+                status: 'Pending'
+            };
+
+            invoices.push(newInvoice);
+            localStorage.setItem('invoicepro-invoices', JSON.stringify(invoices));
+
+            invoiceForm.reset();
+            clearItems();
+            updateInvoicesList();
+            updateDashboard();
+            alert('Invoice created successfully!');
+        });
+
+        // Update functions
+        function updateClientsList() {
+            clientsTable.innerHTML = '';
+            clients.forEach(client => {
+                const row = clientsTable.insertRow();
+                row.insertCell(0).textContent = client.name;
+                row.insertCell(1).textContent = client.email;
+                const phoneCell = row.insertCell(2);
+                phoneCell.textContent = client.phone;
+                phoneCell.classList.add('md:table-cell');
+                row.insertCell(3).innerHTML = `
+                    <button onclick="editClient(${client.id})" class="text-indigo-600 hover:text-indigo-800 mr-2 text-sm py-1 px-2">Edit</button>
+                    <button onclick="deleteClient(${client.id})" class="text-red-600 hover:text-red-800 text-sm py-1 px-2">Delete</button>
+                `;
+            });
+        }
+
+        function updateInvoicesList() {
+            invoicesTable.innerHTML = '';
+            recentInvoicesTable.innerHTML = '';
+
+            invoices.forEach(invoice => {
+                const client = clients.find(c => c.id === invoice.clientId);
+                const row = invoicesTable.insertRow();
+                row.insertCell(0).textContent = invoice.number;
+                row.insertCell(1).textContent = client ? client.name : 'Unknown';
+                row.insertCell(2).textContent = `₹${invoice.total.toFixed(2)}`; // Changed to INR
+                const issueCell = row.insertCell(3);
+                issueCell.textContent = invoice.issueDate;
+                issueCell.classList.add('hidden', 'md:table-cell');
+                row.insertCell(4).textContent = invoice.dueDate;
+                const statusCell = row.insertCell(5);
+                statusCell.textContent = invoice.status;
+                statusCell.classList.add(invoice.status === 'Paid' ? 'text-green-600' : 'text-yellow-600');
+                row.insertCell(6).innerHTML = `
+                    <button onclick="toggleInvoiceStatus(${invoice.id})" class="text-green-600 hover:text-green-800 text-sm py-1 px-2">Mark ${invoice.status === 'Paid' ? 'Pending' : 'Paid'}</button>
+                    <button onclick="generateInvoicePDF(${invoice.id})" class="text-blue-600 hover:text-blue-800 text-sm py-1 px-2 ml-1">Export PDF</button>
+                `;
+
+                // Add to recent invoices (limit to 5)
+                if (recentInvoicesTable.rows.length < 5) {
+                    const recentRow = recentInvoicesTable.insertRow();
+                    recentRow.innerHTML = `
+                        <td>${invoice.number}</td>
+                        <td>${client ? client.name : 'Unknown'}</td>
+                        <td>₹${invoice.total.toFixed(2)}</td>
+                        <td class="${invoice.status === 'Paid' ? 'text-green-600' : 'text-yellow-600'}">${invoice.status}</td>
+                    `;
+                }
+            });
+        }
+
+        function updateDashboard() {
+            const totalInvoices = invoices.length;
+            const paidAmount = invoices.filter(i => i.status === 'Paid').reduce((sum, i) => sum + i.total, 0);
+            const pendingAmount = invoices.filter(i => i.status === 'Pending').reduce((sum, i) => sum + i.total, 0);
+
+            document.getElementById('total-invoices').textContent = totalInvoices;
+            document.getElementById('paid-amount').textContent = `₹${paidAmount.toFixed(2)}`; // Changed to INR
+            document.getElementById('pending-amount').textContent = `₹${pendingAmount.toFixed(2)}`; // Changed to INR
+        }
+
+        function updateClientSelect() {
+            const select = document.getElementById('invoice-client');
+            select.innerHTML = '<option value="">Select a client</option>';
+            clients.forEach(client => {
+                const option = document.createElement('option');
+                option.value = client.id;
+                option.textContent = client.name;
+                select.appendChild(option);
+            });
+        }
+
+        // Helper functions
+        function attachItemEvents(item) {
+            const qtyInput = item.querySelector('.item-qty');
+            const priceInput = item.querySelector('.item-price');
+            const totalInput = item.querySelector('.item-total');
+            const removeBtn = item.querySelector('.remove-item');
+
+            [qtyInput, priceInput].forEach(input => {
+                input.addEventListener('input', () => {
+                    const qty = parseFloat(qtyInput.value) || 0;
+                    const price = parseFloat(priceInput.value) || 0;
+                    totalInput.value = (qty * price).toFixed(2);
+                    updateInvoiceTotals();
+                });
+            });
+
+            removeBtn.addEventListener('click', () => {
+                if (document.querySelectorAll('.item').length > 1) {
+                    item.remove();
+                    updateInvoiceTotals();
+                }
+            });
+        }
+
+        function updateInvoiceTotals() {
+            let subtotal = 0;
+            document.querySelectorAll('.item-total').forEach(input => {
+                subtotal += parseFloat(input.value) || 0;
+            });
+            document.getElementById('subtotal').value = subtotal.toFixed(2);
+
+            const taxRate = parseFloat(document.getElementById('tax').value) || 0;
+            const tax = subtotal * (taxRate / 100);
+            const total = subtotal + tax;
+            document.getElementById('total').value = total.toFixed(2);
+        }
+
+        function clearItems() {
+            const itemsContainer = document.getElementById('items-container');
+            const firstItem = itemsContainer.firstElementChild;
+            itemsContainer.innerHTML = '';
+            itemsContainer.appendChild(firstItem);
+            document.getElementById('invoice-number').value = `INV-${Date.now()}`;
+        }
+
+        function editClient(id) {
+            const client = clients.find(c => c.id === id);
+            if (client) {
+                editingClientId = id;
+                clientNameInput.value = client.name;
+                clientEmailInput.value = client.email;
+                clientPhoneInput.value = client.phone;
+                clientAddressInput.value = client.address;
+
+                clientSubmitBtn.textContent = 'Update Client';
+                clientCancelBtn.classList.remove('hidden');
+
+                // Switch to clients tab if not already there
+                document.getElementById('tab-clients').click();
+            }
+        }
+
+        function deleteClient(id) {
+            if (confirm('Are you sure you want to delete this client and all their associated invoices?')) {
+                // Delete client
+                clients = clients.filter(c => c.id !== id);
+                localStorage.setItem('invoicepro-clients', JSON.stringify(clients));
+
+                // Delete associated invoices
+                invoices = invoices.filter(invoice => invoice.clientId !== id);
+                localStorage.setItem('invoicepro-invoices', JSON.stringify(invoices));
+
+                updateClientsList();
+                updateClientSelect();
+                updateInvoicesList(); // Refresh invoices as well
+                updateDashboard(); // Refresh dashboard totals
+                alert('Client and associated invoices deleted successfully!');
+            }
+        }
+
+        function toggleInvoiceStatus(id) {
+            const invoice = invoices.find(i => i.id === id);
+            if (invoice) {
+                invoice.status = invoice.status === 'Paid' ? 'Pending' : 'Paid';
+                localStorage.setItem('invoicepro-invoices', JSON.stringify(invoices));
+                updateInvoicesList();
+                updateDashboard();
+            }
+        }
+
+        function generateInvoicePDF(invoiceId) {
+            const invoice = invoices.find(i => i.id === invoiceId);
+            const client = clients.find(c => c.id === invoice.clientId);
+
+            if (!invoice || !client) {
+                alert('Invoice or client not found!');
+                return;
+            }
+
+            const invoiceContent = `
+                <div style="font-family: 'Inter', sans-serif; padding: 20px; max-width: 800px; margin: auto; border: 1px solid #eee; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
+                    <h2 style="text-align: center; color: #4f46e5; margin-bottom: 20px;">InvoicePro - Invoice</h2>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                        <div>
+                            <strong>Invoice Number:</strong> ${invoice.number}<br>
+                            <strong>Issue Date:</strong> ${invoice.issueDate}<br>
+                            <strong>Due Date:</strong> ${invoice.dueDate}<br>
+                        </div>
+                        <div>
+                            <strong>Billed To:</strong><br>
+                            ${client.name}<br>
+                            ${client.address}<br>
+                            ${client.email}<br>
+                            ${client.phone}
+                        </div>
+                    </div>
+
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                        <thead>
+                            <tr style="background-color: #f2f2f2;">
+                                <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Description</th>
+                                <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Qty</th>
+                                <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Price (₹)</th>
+                                <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Total (₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${invoice.items.map(item => `
+                                <tr>
+                                    <td style="padding: 8px; border: 1px solid #ddd;">${item.desc}</td>
+                                    <td style="padding: 8px; border: 1px solid #ddd;">${item.qty}</td>
+                                    <td style="padding: 8px; border: 1px solid #ddd;">${item.price.toFixed(2)}</td>
+                                    <td style="padding: 8px; border: 1px solid #ddd;">${item.total.toFixed(2)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+
+                    <div style="text-align: right;">
+                        <p><strong>Subtotal:</strong> ₹${invoice.subtotal.toFixed(2)}</p>
+                        <p><strong>Tax (${invoice.tax}%):</strong> ₹${(invoice.subtotal * (invoice.tax / 100)).toFixed(2)}</p>
+                        <p style="font-size: 1.2em; font-weight: bold;">Total: ₹${invoice.total.toFixed(2)}</p>
+                        <p><strong>Status:</strong> ${invoice.status}</p>
+                    </div>
+
+                    <p style="text-align: center; margin-top: 30px; color: #888;">Thank you for your business!</p>
+                </div>
+            `;
+
+            html2pdf().from(invoiceContent).save(`Invoice_${invoice.number}.pdf`);
+        }
+
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Show loading screen for at least 2 seconds, or when everything is loaded
+            setTimeout(() => {
+                updateClientsList();
+                updateInvoicesList();
+                updateDashboard();
+                updateClientSelect();
+                clearItems();
+                
+                // Set today's date as default for issue date
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('issue-date').value = today;
+                
+                // Set due date to 30 days from today
+                const dueDate = new Date();
+                dueDate.setDate(dueDate.getDate() + 30);
+                document.getElementById('due-date').value = dueDate.toISOString().split('T')[0];
+                
+                // Attach events to initial item
+                attachItemEvents(document.querySelector('.item'));
+                
+                // Add tax input event
+                document.getElementById('tax').addEventListener('input', updateInvoiceTotals);
+                
+                // Hide loading screen and show main content
+                hideLoadingScreen();
+            }, 2000); // 2 second loading time for effect
+        });
+    </script>
+</body>
+
+</html>
